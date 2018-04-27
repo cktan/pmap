@@ -18,7 +18,7 @@ func Pmap(n int, m int, fn Func) error {
 		// harvest
                 var err error
 		for i := 0; i < n && err == nil; i++ {
-			err <-fin
+			err = <-fin
 		}
 		done <- err
 	}()
