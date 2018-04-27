@@ -1,11 +1,11 @@
 package pmap
 
-type Func func(int) bool
+type Func func(int) error
 
-func Pmap(n int, m int, fn Func) bool {
+func Pmap(n int, m int, fn Func) error {
 
-	done := make(chan bool)
-	fin := make(chan bool)
+	done := make(chan error)
+	fin := make(chan error)
 	gate := make(chan int)
 	go func() {
 		// seed
@@ -16,11 +16,11 @@ func Pmap(n int, m int, fn Func) bool {
 
 	go func() {
 		// harvest
-		res := true
-		for i := 0; i < n; i++ {
-			res = res && <-fin
+                var err error
+		for i := 0; i < n && err == nil; i++ {
+			err <-fin
 		}
-		done <- res
+		done <- err
 	}()
 
 	for i := 0; i < n; i++ {
