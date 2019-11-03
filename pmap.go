@@ -1,35 +1,30 @@
 package pmap
 
-type Func func(int) error
+func pmap(processitem func(idx int), maxidx int, maxworker int) {
+	// notified when a go routine is done
+	// must have maxidx reserved to avoid potential race
+	fin := make(chan int, maxidx) 
 
-func Pmap(n int, m int, fn Func) error {
+	// the gate - controls #concurrent go routines at any time
+	gate := make(chan int, maxworker)
+	defer close(fin)
+	defer close(gate)
 
-	done := make(chan error)
-	fin := make(chan error)
-	gate := make(chan int)
-	go func() {
-		// seed
-		for i := 0; i < m; i++ {
-			gate <- 0
-		}
-	}()
-
-	go func() {
-		// harvest
-                var err error
-		for i := 0; i < n && err == nil; i++ {
-			err = <-fin
-		}
-		done <- err
-	}()
-
-	for i := 0; i < n; i++ {
-		<-gate
-		go func() {
-			fin <- fn(i)
-			gate <- 0
-		}()
+	// let maxworker run
+	for i := 0; i < maxworker; i++ {
+		gate <- 1
+	}
+	for i := 0; i < maxidx; i++ {
+		<-gate		// wait to launch 
+		go func(idx int) {
+			processitem(idx)
+			gate <- 1 // let next guy run
+			fin <- idx // notify done
+		}(i)
 	}
 
-	return <-done
+	// wait for all jobs to finish
+	for i := 0; i < maxidx; i++ {
+		<-fin
+	}
 }
