@@ -11,7 +11,7 @@ func Pmap(processItem func(n int), N int, M int) {
 
 	var fin chan int
 	var ticket chan int
-	if true {
+	if false {
 		// for debug
 		fin = make(chan int)
 		ticket = make(chan int)
@@ -19,12 +19,8 @@ func Pmap(processItem func(n int), N int, M int) {
 		fin = make(chan int, 10)
 		ticket = make(chan int, 10)
 	}
-	defer func() {
-		close(fin)
-		close(ticket)
-	}()
 
-	// let M go routines run concurrently
+	// let M workers run concurrently
 	for i := 0; i < M; i++ {
 		go func() {
 			for {
@@ -38,8 +34,9 @@ func Pmap(processItem func(n int), N int, M int) {
 		}()
 	}
 
+	// send the jobs. Do this in a go routine so we don't have a
+	// race between ticket and fin
 	go func() {
-		// send the jobs
 		for i := 0; i < N; i++ {
 			ticket <- i
 		}
@@ -49,9 +46,16 @@ func Pmap(processItem func(n int), N int, M int) {
 	for i := 0; i < N; i++ {
 		<-fin
 	}
-	// send the terminate signal
+	
+	// safe to close fin here because all workers must be blocked
+	// waiting on ticket at this time
+	close(fin)
+	
+	// send the terminate signal. each worker will get the term
+	// signal and MUST NOT send to fin (it was closed above).
 	for i := 0; i < M; i++ {
 		ticket <- -1
 	}
 
+	close(ticket)
 }
