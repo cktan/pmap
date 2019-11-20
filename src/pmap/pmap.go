@@ -5,20 +5,20 @@ package pmap
  *  Process N items using M go routines
  */
 func Pmap(processItem func(n int), N int, M int) {
-	if (M > N) {
+	if M > N {
 		M = N
 	}
 
 	var fin chan int
 	var ticket chan int
-	if false {
+	if true {
 		// for debug
 		fin = make(chan int)
 		ticket = make(chan int)
 	} else {
 		fin = make(chan int, 10)
 		ticket = make(chan int, 10)
-	} 
+	}
 	defer func() {
 		close(fin)
 		close(ticket)
@@ -28,7 +28,7 @@ func Pmap(processItem func(n int), N int, M int) {
 	for i := 0; i < M; i++ {
 		go func() {
 			for {
-				idx := <- ticket
+				idx := <-ticket
 				if idx == -1 {
 					return
 				}
@@ -43,16 +43,15 @@ func Pmap(processItem func(n int), N int, M int) {
 		for i := 0; i < N; i++ {
 			ticket <- i
 		}
-		// send the terminate signal
-		for i := 0; i < M; i++ {
-			ticket <- -1
-		}
 	}()
-	
+
 	// wait for all jobs to finish
 	for i := 0; i < N; i++ {
 		<-fin
 	}
+	// send the terminate signal
+	for i := 0; i < M; i++ {
+		ticket <- -1
+	}
 
 }
-
