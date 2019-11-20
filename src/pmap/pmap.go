@@ -11,7 +11,7 @@ func Pmap(processItem func(n int), N int, M int) {
 
 	var fin chan int
 	var ticket chan int
-	if true {
+	if false {
 		// for debug
 		fin = make(chan int)
 		ticket = make(chan int)
