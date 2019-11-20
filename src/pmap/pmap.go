@@ -46,16 +46,26 @@ func Pmap(processItem func(n int), N int, M int) {
 	for i := 0; i < N; i++ {
 		<-fin
 	}
+
+	// Go Channel Closing Principle:
+	//  - Don't close a channel from the receiver side and
+	//  - Don't close a channel if the channel has multiple concurrent senders.
+
+	// At this point, we gave out N tickets, and we received N fins.
+	// All workers must be blocked waiting for ticket at this time.
+	// They will next get the term signal and exit.
 	
-	// safe to close fin here because all workers must be blocked
-	// waiting on ticket at this time
+	// Even though we are receiver on fin, we can close it making sure
+	// sure that no one will ever send to it again.
 	close(fin)
 	
-	// send the terminate signal. each worker will get the term
+	// Send the terminate signal. each worker will get the term
 	// signal and MUST NOT send to fin (it was closed above).
 	for i := 0; i < M; i++ {
 		ticket <- -1
 	}
 
+	// we are the only one sending on ticket, so it is always safe
+	// for us to close ticket.
 	close(ticket)
 }
