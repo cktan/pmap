@@ -38,10 +38,14 @@ func Pmap(processItem func(n int), N int, M int) {
 		}()
 	}
 
-	// send the jobs
 	go func() {
+		// send the jobs
 		for i := 0; i < N; i++ {
 			ticket <- i
+		}
+		// send the terminate signal
+		for i := 0; i < M; i++ {
+			ticket <- -1
 		}
 	}()
 	
@@ -50,9 +54,5 @@ func Pmap(processItem func(n int), N int, M int) {
 		<-fin
 	}
 
-	// send the terminate signal
-	for i := 0; i < M; i++ {
-		ticket <- -1
-	}
 }
 
