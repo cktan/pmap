@@ -44,11 +44,6 @@ func main() {
 	fmt.Println("-------------------------")
 	fmt.Println()
 	
-	fmt.Println("numworkers 50")
-	run(50)
-	fmt.Println("-------------------------")
-	fmt.Println()
-	
 	fmt.Println("numworkers 20")
 	run(20)
 	fmt.Println("-------------------------")

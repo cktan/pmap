@@ -24,8 +24,8 @@ func Pmap(processItem func(n int), N int, M int) {
 	for i := 0; i < M; i++ {
 		go func() {
 			for {
-				idx := <-ticket
-				if idx == -1 {
+				idx, ok := <-ticket
+				if !ok {
 					return
 				}
 				processItem(idx)
@@ -40,6 +40,7 @@ func Pmap(processItem func(n int), N int, M int) {
 		for i := 0; i < N; i++ {
 			ticket <- i
 		}
+		close(ticket)
 	}()
 
 	// wait for all jobs to finish
@@ -58,14 +59,4 @@ func Pmap(processItem func(n int), N int, M int) {
 	// Even though we are receiver on fin, we can close it making sure
 	// sure that no one will ever send to it again.
 	close(fin)
-	
-	// Send the terminate signal. each worker will get the term
-	// signal and MUST NOT send to fin (it was closed above).
-	for i := 0; i < M; i++ {
-		ticket <- -1
-	}
-
-	// we are the only one sending on ticket, so it is always safe
-	// for us to close ticket.
-	close(ticket)
 }
