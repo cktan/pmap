@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"os"
 	"pmap"
-	"time"
 	"sync/atomic"
+	"time"
 )
 
 func run(numworkers int) {
@@ -43,10 +43,10 @@ func main() {
 	run(100)
 	fmt.Println("-------------------------")
 	fmt.Println()
-	
+
 	fmt.Println("numworkers 20")
 	run(20)
 	fmt.Println("-------------------------")
 	fmt.Println()
-	
+
 }

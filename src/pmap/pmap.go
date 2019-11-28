@@ -2,7 +2,6 @@ package pmap
 
 import "sync"
 
-
 /**
  *  Process N items using M go routines
  */
@@ -18,12 +17,7 @@ func Pmap(processItem func(n int), N int, M int) {
 	wg.Add(M)
 	for i := 0; i < M; i++ {
 		go func() {
-			for {
-				idx, ok := <-ticket
-				if !ok {
-					// no more ticket. sender closed.
-					break
-				}
+			for idx := range ticket {
 				processItem(idx)
 			}
 			wg.Done()
