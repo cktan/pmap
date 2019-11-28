@@ -1,1 +1,1 @@
-( cd ./src/pmaptest && GOPATH=`pwd`/../.. go run pmaptest)
+( cd ./src/pmap && GOPATH=`pwd`/../.. go build . )
