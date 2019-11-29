@@ -52,19 +52,19 @@ func (jq *JobQueue) SetNWorker(n int) {
 
 func (jq *JobQueue) addWorker() {
 	jq.waitGroup.Add(1)
-	go jq.run()
+	id := atomic.AddInt32(&jq.nworker, 1) 
+	go jq.run(id)
 }
 
 func (jq *JobQueue) dropWorker() {
 	n := atomic.LoadInt32(&jq.nworker) - 1
-	if n > 0 {
+	if n >= 0 {
 		atomic.StoreInt32(&jq.nworker, n)
 	}
 }
 
 
-func (jq *JobQueue) run() {
-	id := atomic.AddInt32(&jq.nworker, 1) 
+func (jq *JobQueue) run(id int32) {
 	for item := range jq.backlog {
 		item.processItem(item.idx)
 		n := atomic.LoadInt32(&jq.nworker)
