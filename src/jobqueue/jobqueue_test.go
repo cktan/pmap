@@ -11,7 +11,6 @@ import (
 func TestJobQueue(t *testing.T) {
 	N := 20
 	status := make([]int, N)
-	jq := New(5);
 	var active int32
 
 	work := func(k int) {
@@ -24,6 +23,7 @@ func TestJobQueue(t *testing.T) {
 		t.Logf("%d fin [%d active]\n", k, cur)
 	}
 
+	jq := New(5);
 	for i := 0; i < N; i++ {
 		jq.Add(work, i)
 	}
