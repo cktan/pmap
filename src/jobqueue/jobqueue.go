@@ -2,7 +2,6 @@ package jobqueue
 
 import (
 	"sync"
-	"sync/atomic"
 )
 
 
@@ -12,9 +11,11 @@ type Item struct {
 }
 
 type JobQueue struct {
-	nworker int32
-	backlog chan *Item
-	waitGroup sync.WaitGroup
+	sync.Mutex		// protects nworker and nzombie
+	nworker     int		// # go routines running
+	nzombie     int		// # those dying
+	backlog chan *Item	// send jobs through this channel
+	waitGroup sync.WaitGroup // sync for group exit
 }
 
 func New(nworker int) *JobQueue {
@@ -29,48 +30,51 @@ func (jq *JobQueue) Destroy() {
 }
 
 func (jq *JobQueue) NWorker() int {
-	return int(jq.nworker)
+	return jq.nworker
 }
 
 func (jq *JobQueue) SetNWorker(n int) {
 	if n < 0 {
 		return
 	}
-	N := int32(n)
-	for {
-		k := atomic.LoadInt32(&jq.nworker)
-		if k == N {
-			break
+
+	jq.Lock()
+	defer jq.Unlock()
+
+	// increase workers
+	for jq.nworker - jq.nzombie < n {
+		if jq.nzombie > 0 {
+			jq.nzombie--
+			continue
 		}
-		if k < N {
-			jq.addWorker()
-		} else {
-			jq.dropWorker()
-		}
+
+		jq.nworker++
+		jq.waitGroup.Add(1)
+		go jq.run()
 	}
-}
 
-func (jq *JobQueue) addWorker() {
-	jq.waitGroup.Add(1)
-	id := atomic.AddInt32(&jq.nworker, 1) 
-	go jq.run(id)
-}
-
-func (jq *JobQueue) dropWorker() {
-	n := atomic.LoadInt32(&jq.nworker) - 1
-	if n >= 0 {
-		atomic.StoreInt32(&jq.nworker, n)
+	// decrease workers
+	for jq.nworker - jq.nzombie > n {
+		jq.nzombie++
 	}
 }
 
 
-func (jq *JobQueue) run(id int32) {
+func (jq *JobQueue) run() {
 	for item := range jq.backlog {
 		item.processItem(item.idx)
-		n := atomic.LoadInt32(&jq.nworker)
-		if (id > n) {
-			// i am no longer needed
-			break
+		if jq.nzombie > 0 {
+			exit := false
+			jq.Lock()
+			if jq.nzombie > 0 {
+				jq.nzombie--
+				exit = true
+			}
+			jq.Unlock()
+
+			if exit {
+				break
+			}
 		}
 	}
 	jq.waitGroup.Done()
