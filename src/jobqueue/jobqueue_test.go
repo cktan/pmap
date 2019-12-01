@@ -1,12 +1,11 @@
 package jobqueue
 
 import (
-	"testing"
 	"math/rand"
 	"sync/atomic"
+	"testing"
 	"time"
 )
-
 
 func TestJobQueue(t *testing.T) {
 	N := 20
@@ -17,13 +16,13 @@ func TestJobQueue(t *testing.T) {
 		x := rand.Intn(10)
 		cur := atomic.AddInt32(&active, 1)
 		t.Logf("%d start sleep %d [%d active]\n", k, x, cur)
-		time.Sleep(time.Duration(x * 100) * time.Millisecond)
+		time.Sleep(time.Duration(x*100) * time.Millisecond)
 		status[k] = 999
 		cur = atomic.AddInt32(&active, -1)
 		t.Logf("%d fin [%d active]\n", k, cur)
 	}
 
-	jq := New(5);
+	jq := New(5)
 	for i := 0; i < N; i++ {
 		jq.Add(work, i)
 	}

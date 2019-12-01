@@ -1,13 +1,13 @@
 package pmap
 
 import (
-	"testing"
 	"math/rand"
 	"sync/atomic"
+	"testing"
 	"time"
 )
 
-func test1_run(numworkers int, t *testing.T)  {
+func test1_run(numworkers int, t *testing.T) {
 	var status [200]int
 	var active int32
 
@@ -16,7 +16,7 @@ func test1_run(numworkers int, t *testing.T)  {
 		cur := atomic.AddInt32(&active, 1)
 		x := rand.Intn(10)
 		t.Logf("%d start sleep %d [%d active]\n", k, x, cur)
-		time.Sleep(time.Duration(x * 100) * time.Millisecond)
+		time.Sleep(time.Duration(x*100) * time.Millisecond)
 		status[k] = 999
 		cur = atomic.AddInt32(&active, -1)
 		t.Logf("%d fin [%d active]\n", k, cur)
