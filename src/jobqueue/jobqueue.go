@@ -5,8 +5,8 @@ import (
 )
 
 type Item struct {
-	idx         int
-	processItem func(idx int)
+	arg         int
+	processItem func(arg int)
 }
 
 type JobQueue struct {
@@ -65,7 +65,7 @@ func (jq *JobQueue) SetNWorker(n int) {
 
 func (jq *JobQueue) run() {
 	for item := range jq.backlog {
-		item.processItem(item.idx)
+		item.processItem(item.arg)
 		if jq.nzombie > 0 {
 			exit := false
 			jq.Lock()
@@ -83,7 +83,7 @@ func (jq *JobQueue) run() {
 	jq.waitGroup.Done()
 }
 
-func (jq *JobQueue) Add(processItem func(idx int), idx int) {
-	item := &Item{idx, processItem}
+func (jq *JobQueue) Add(processItem func(arg int), arg int) {
+	item := &Item{arg, processItem}
 	jq.backlog <- item
 }
